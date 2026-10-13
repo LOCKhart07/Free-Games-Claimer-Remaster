@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). This project does not follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html): every release raises the number after the dot (1.10, 1.11), and a development build carries the same number with a `d` suffix (`v1.11d`). The version being worked on stays at the top without a date until it is released.
 
+## [1.14] - 2026-10-13
+
+Steam no longer reads SteamDB: free Steam games now come from GamerPower and Steam's own store search ([#84](https://github.com/P-Adamiec/Free-Games-Claimer-Remaster/issues/84)).
+
+### Added
+- **DLC giveaways are switched per store** – `STEAM_CLAIM_DLC`, `EG_CLAIM_DLC` and `MS_CLAIM_DLC`, all on, decide whether Steam, Epic and the Microsoft Store take DLC; itch.io, IndieGala and Fanatical take theirs too. GamerPower's DLC count only when it gives them a price, so codes for items inside a game stay out.
+- **`STEAM_SEARCH=false` leaves Steam to GamerPower** – a safety switch should Steam ever mind the search: Steam then claims only what GamerPower found, and does not start Chrome when GamerPower had nothing.
+- **Discord notifications without link previews (PR [#81](https://github.com/P-Adamiec/Free-Games-Claimer-Remaster/pull/81) by @ckl)** – `src/core/notifier.py` now sends each Discord message with its links but without preview cards, so a summary with many games stays short. `DISCORD_SUPPRESS_EMBEDS=false` brings the cards back; Apprise services are not affected.
+- **`DEBUG_SCREENSHOTS=true` sends the failure screenshots** – every screenshot the bot takes when something goes wrong also reaches your Discord and Apprise services, so you see what the page showed without opening `data/screenshots/`. Off by default: a screenshot can show your account name, e-mail or a game code.
+- **Issues get their labels on their own** – `.github/workflows/issue-digest.yml` runs each morning: Claude labels new and closed issues and may change nothing but labels, and the owner gets a Discord digest of new issues, replies and discussions waiting for an answer. The bot itself does not change.
+
+### Changed
+- **Steam no longer uses SteamDB ([#84](https://github.com/P-Adamiec/Free-Games-Claimer-Remaster/issues/84))** – SteamDB asked bots to stop reading its pages, so `src/stores/steam.py` takes GamerPower's Steam giveaways first, then Steam's own store search, and claims an item only when its page shows the 100% discount. Free-to-play games and items free for good are skipped.
+- **GamerPower remembers where its links lead** – `src/stores/gamerpower.py` keeps each giveaway's store for two weeks in `data/gamerpower_routes.json`, so a giveaway for a store you don't run is looked up and reported once, not on every run.
+
+### Removed
+- **`GP_CLAIM_DLC`** – replaced by the per-store switches above: if you set it, set `STEAM_CLAIM_DLC`, `EG_CLAIM_DLC` or `MS_CLAIM_DLC` instead, the log names the old setting until you do. Alienware Arena's DLC keys are no longer reported.
+- **`data/steamdb_dump.html`** – the SteamDB page the bot saved with `DEBUG=true` is gone with SteamDB; leave it out when you send debug files.
+
+### Fixed
+- **Another part of a game series is no longer taken for one you have** – `src/stores/gamerpower.py` matched titles by fragment, so a claimed "DOOM" hid "Doomtrooper CCG Card Pack" and "Pony Island" would hide "Pony Island 2". A giveaway now counts as done only when its whole title matches, after GamerPower's tags such as "(IndieGala)" are dropped.
+
 ## [1.13] - 2026-10-12
 
 ### Added
@@ -381,6 +403,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - ❌ `unrealengine.js` – Out of scope
 - ❌ `steam-games.js` – Only scraped profiles, never claimed games
 
+[1.14]: https://github.com/P-Adamiec/Free-Games-Claimer-Remaster/compare/v1.13...v1.14
 [1.13]: https://github.com/P-Adamiec/Free-Games-Claimer-Remaster/compare/v1.12...v1.13
 [1.12]: https://github.com/P-Adamiec/Free-Games-Claimer-Remaster/compare/v1.11...v1.12
 [1.11]: https://github.com/P-Adamiec/Free-Games-Claimer-Remaster/compare/v1.10...v1.11

@@ -635,10 +635,12 @@ class BaseClaimer:
         try:
             await self.page.save_screenshot(str(p))
             self.logger.debug("Screenshot saved: %s", p)
-            return p
         except Exception:
             self.logger.exception("Failed to save screenshot")
             return None
+        if cfg.debug_screenshots:
+            await self.notify(f"📸 {self.store_name}: `{p.name}`", screenshot_path=p)
+        return p
 
     # ------------------------------------------------------------------
     # Utilities
@@ -829,7 +831,7 @@ class BaseClaimer:
         """Return True when the current page is a Cloudflare / captcha human-check.
 
         Covers the Cloudflare "Just a moment…" / Turnstile interstitial that can
-        gate a whole domain before login (e.g. store.epicgames.com, steamdb.info)
+        gate a whole domain before login (e.g. store.epicgames.com, fab.com)
         as well as hCaptcha / Arkose (FunCaptcha) login challenges. None of these
         can be solved automatically, so detecting one lets a store notify the
         user for a one-time manual solve via VNC. Matches only known providers /
