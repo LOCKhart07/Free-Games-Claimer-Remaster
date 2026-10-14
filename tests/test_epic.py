@@ -92,6 +92,34 @@ class TestAGameBlockedInYourRegion:
         assert "already handled" in run and "in handled" in run
 
 
+class TestASecurityCheckOnTheGamePage:
+    """Out of Sight, 10.26: Cloudflare's "One more step" page was read as the game, a failed claim every run."""
+
+    SOURCE = (Path(__file__).resolve().parent.parent / "src" / "stores" / "epic.py").read_text(encoding="utf-8")
+    CLAIM = SOURCE.split("async def _claim_game", 1)[1].split("\n    async def ", 1)[0]
+    CHECK = CLAIM.split("if await self._human_challenge_present():", 1)[1].split("# ── Handle mature content", 1)[0]
+
+    def test_it_is_looked_for_before_the_page_is_read(self):
+        assert self.CLAIM.index("_human_challenge_present()") < self.CLAIM.index("self._page_state()")
+        assert self.CLAIM.index("_human_challenge_present()") < self.CLAIM.index("document.querySelector('h1')")
+
+    def test_a_game_you_own_is_not_worth_a_captcha(self):
+        owned = self.CHECK.index('obj.status in ("claimed", "existed")')
+        assert owned < self.CHECK.index("_wait_out_challenge(")
+        assert "return" in self.CHECK[owned:self.CHECK.index("_wait_out_challenge(")]
+
+    def test_the_name_never_comes_from_the_check_page(self):
+        assert "title_from_slug(game_id)" in self.CHECK
+        assert "page.evaluate" not in self.CHECK
+
+
+def test_library_request_lines_stay_out_of_the_debug_log():
+    # urllib3 logged Telegram's sendMessage URL, bot token and all.
+    main = (Path(__file__).resolve().parent.parent / "main.py").read_text(encoding="utf-8")
+    noisy = main.split("NOISY_LIBRARIES = (", 1)[1].split(")", 1)[0]
+    assert '"urllib3"' in noisy
+
+
 class TestClaimHonesty:
     """Mobile games were reported as claimed on the strength of the checkout page alone."""
 

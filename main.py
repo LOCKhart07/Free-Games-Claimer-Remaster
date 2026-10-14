@@ -87,6 +87,8 @@ logger = logging.getLogger("fgc")
 NOISY_LIBRARIES = (
     "nodriver", "uc", "websockets", "httpx", "httpcore",
     "aiosqlite", "sqlalchemy", "apscheduler", "tzlocal", "asyncio", "apprise",
+    # urllib3 logs whole request lines, Telegram's bot token included.
+    "urllib3", "markdown",
 )
 if not cfg.debug_libs:
     for _name in NOISY_LIBRARIES:

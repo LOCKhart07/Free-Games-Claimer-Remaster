@@ -1042,6 +1042,20 @@ class EpicGamesClaimer(BaseClaimer):
             await self.page.get(url)
             await self.sleep(4)
 
+            # Cloudflare can put its "One more step" check in front of a single game page.
+            # Read as a store page, its heading became the title and the game failed every run.
+            if await self._human_challenge_present():
+                title = obj.title if obj.title and obj.title != game_id else title_from_slug(game_id)
+                if obj.status in ("claimed", "existed"):
+                    logger.info("'%s' is behind a security check, but it is already in your library.", title)
+                    return
+                if not await self._wait_out_challenge("Epic", store_key=self.store_name):
+                    logger.warning("Security check on '%s' not cleared, trying again next run.", title)
+                    self.notify_games.append({"title": title, "url": url, "status": "failed"})
+                    return
+                await self.page.get(url)
+                await self.sleep(4)
+
             # ── Handle mature content / age gate ──
             await self._click_page_button_by_text("Continue", timeout=2, log="mature content gate")
 
